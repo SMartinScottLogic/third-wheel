@@ -12,6 +12,8 @@ use openssl::stack::Stack;
 use openssl::x509::extension::{AuthorityKeyIdentifier, SubjectAlternativeName};
 use openssl::x509::{GeneralNameRef, X509Name, X509NameRef, X509};
 
+use crate::error::Error;
+
 /// A certificate authority to use for impersonating websites during the
 /// man-in-the-middle.
 pub struct CertificateAuthority {
@@ -25,7 +27,7 @@ impl CertificateAuthority {
     pub fn load_from_pem_files(
         cert_file: &str,
         key_file: &str,
-    ) -> Result<Self, Box<dyn std::error::Error>> {
+    ) -> Result<Self, Error> {
         let mut cert_file = File::open(cert_file)?;
         let mut cert: Vec<u8> = vec![];
         io::copy(&mut cert_file, &mut cert)?;
@@ -57,7 +59,7 @@ pub(crate) fn native_identity(certificate: &X509, key: &PKey<Private>) -> native
 pub fn create_signed_certificate_for_domain(
     domain: &str,
     ca: &CertificateAuthority,
-) -> Result<X509, Box<dyn std::error::Error>> {
+) -> Result<X509, Error> {
     let mut cert_builder = X509::builder()?;
 
     let mut host_name = X509Name::builder()?;
@@ -139,7 +141,7 @@ fn copy_alt_names(in_cert: &X509) -> Option<SubjectAlternativeName> {
 pub(crate) fn spoof_certificate(
     certificate: &X509,
     ca: &CertificateAuthority,
-) -> Result<X509, Box<dyn std::error::Error>> {
+) -> Result<X509, Error> {
     let mut cert_builder = X509::builder()?;
 
     let name: &X509NameRef = certificate.subject_name();
