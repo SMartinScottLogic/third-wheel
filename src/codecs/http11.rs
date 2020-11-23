@@ -72,9 +72,9 @@ impl Decoder for HttpServer {
     fn decode(&mut self, src: &mut BytesMut) -> io::Result<Option<Self::Item>> {
         // TODO: we should grow this headers array if parsing fails and asks
         //       for more headers
-        let mut headers = [None; 16];
+        let mut headers = [None; 32];
         let (status, _reason, version, amt) = {
-            let mut parsed_headers = [httparse::EMPTY_HEADER; 16];
+            let mut parsed_headers = [httparse::EMPTY_HEADER; 32];
             let mut r = httparse::Response::new(&mut parsed_headers);
             let status = r.parse(src).map_err(|e| {
                 let msg = format!("failed to parse http response: {:?}", e);
@@ -192,9 +192,9 @@ impl Decoder for HttpClient {
     fn decode(&mut self, src: &mut BytesMut) -> io::Result<Option<Request<Vec<u8>>>> {
         // TODO: we should grow this headers array if parsing fails and asks
         //       for more headers
-        let mut headers = [None; 16];
+        let mut headers = [None; 32];
         let (method, path, version, amt) = {
-            let mut parsed_headers = [httparse::EMPTY_HEADER; 16];
+            let mut parsed_headers = [httparse::EMPTY_HEADER; 32];
             let mut r = httparse::Request::new(&mut parsed_headers);
             let status = r.parse(src).map_err(|e| {
                 let msg = format!("failed to parse http request: {:?}", e);

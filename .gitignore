@@ -1,1 +1,3 @@
 *.pem
+/archive
+/target

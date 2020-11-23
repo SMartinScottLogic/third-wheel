@@ -73,7 +73,7 @@ async fn tls_mitm(
 ) -> Result<(), Error> {
     let (host, port) = target_host_port_from_connect(&opening_request)?;
 
-    if port == "443" {
+    //if port == "443" {
         let (target_stream, server_certificate) = connect_to_target_with_tls(&host, &port).await?;
         client_stream
             .send(
@@ -89,7 +89,7 @@ async fn tls_mitm(
         let identity = native_identity(&certificate, &cert_auth.key)?;
         let client_stream = convert_to_tls(client_stream, identity).await?;
         run_mitm_on_stream(client_stream, target_stream, mitm).await
-    } else {
+    /*} else {
         let target_stream = TcpStream::connect(format!("{}:{}", host, port)).await?;
         let target_stream = Framed::new(target_stream, HttpServer);
         client_stream
@@ -103,6 +103,7 @@ async fn tls_mitm(
             .await?;
         run_mitm_on_stream(client_stream, target_stream, mitm).await
     }
+    */
 }
 
 async fn run_mitm_on_stream<T>(
@@ -126,7 +127,13 @@ where
             RequestCapture::Continue => {}
         }
 
-        *request.uri_mut() = request.uri().path().parse()?;
+        /*
+        *request.uri_mut() = match request.uri().query() {
+            Some(query) => request.uri().path().to_owned() + "?" + query,
+            None => request.uri().path().to_string()
+        }.parse()?;
+*/
+        //*request.uri_mut() = request.uri().path().parse()?;
         request.headers_mut().remove(&proxy_connection);
         target_stream.send(&request).await?;
 
@@ -177,7 +184,7 @@ async fn connect_to_target_with_tls(
     port: &str,
 ) -> Result<(Framed<TlsStream<TcpStream>, HttpServer>, X509), Error> {
     let target_stream = TcpStream::connect(format!("{}:{}", host, port)).await?;
-    let connector = native_tls::TlsConnector::builder().build()?;
+    let connector = native_tls::TlsConnector::builder().danger_accept_invalid_certs(true).danger_accept_invalid_hostnames(true).build()?;
     let tokio_connector = tokio_native_tls::TlsConnector::from(connector);
     let target_stream = tokio_connector.connect(&host, target_stream).await?;
     //TODO: Currently to copy the certificate we do a round trip from one library -> der -> other library. This is inefficient, it should be possible to do it better some how.
